@@ -380,14 +380,9 @@ bool StellarSolver::checkParameters()
 
         if(params.multiAlgorithm == MULTI_AUTO)
         {
-            if(m_UseScale && m_UsePosition)
-                params.multiAlgorithm = NOT_MULTI;
-            else if(m_UsePosition)
-                params.multiAlgorithm = MULTI_SCALES;
-            else if(m_UseScale)
-                params.multiAlgorithm = MULTI_DEPTHS;
-            else
-                params.multiAlgorithm = MULTI_SCALES;
+            // MULTI_DEPTHS needs position to narrow healpix search; without it
+            // every thread searches all sky regions, causing 5-14x slowdowns.
+            params.multiAlgorithm = m_UsePosition ? MULTI_DEPTHS : MULTI_SCALES;
         }
 
         if(m_ProcessType == SOLVE && m_SolverType == SOLVER_WATNEYASTROMETRY && params.keepNum < 300)
@@ -488,17 +483,22 @@ void StellarSolver::parallelSolve()
         //We don't need an unnecessary number of threads
         if(inc < 10)
             inc = 10;
+        // On dense fields the brightest stars cluster spatially, so shallow
+        // threads form only tiny quads that fail index scale checks. Extend
+        // their depth range so they reach stars at wider separations.
+        int minEndDepth = qMin(sourceNum, 20);
         if(m_SSLogLevel != LOG_OFF)
             emit logOutput(QString("Starting %1 threads to solve on multiple depths").arg(sourceNum / inc));
         for(int i = 1; i < sourceNum; i += inc)
         {
+            int endDepth = qMax(i + inc, minEndDepth);
             ExtractorSolver *solver = m_ExtractorSolver->spawnChildSolver(i);
             connect(solver, &ExtractorSolver::finished, this, &StellarSolver::finishParallelSolve);
             solver->depthlo = i;
-            solver->depthhi = i + inc;
+            solver->depthhi = endDepth;
             parallelSolvers.append(solver);
             if(m_SSLogLevel != LOG_OFF)
-                emit logOutput(QString("Child Solver # %1, Depth Low %2, Depth High %3").arg(parallelSolvers.count()).arg(i).arg(i + inc));
+                emit logOutput(QString("Child Solver # %1, Depth Low %2, Depth High %3").arg(parallelSolvers.count()).arg(i).arg(endDepth));
         }
     }
     for(auto &solver : parallelSolvers)

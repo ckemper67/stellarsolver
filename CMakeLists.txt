@@ -592,6 +592,18 @@ if(BUILD_TESTS)
     add_executable(TestMultipleSyncSolvers ${CMAKE_CURRENT_SOURCE_DIR}/tests/testmultiplesyncsolvers.cpp)
     target_link_libraries(TestMultipleSyncSolvers PUBLIC StellarSolverTestsLib)
 
+    if(USE_QT5)
+        find_package(Qt5 COMPONENTS Test QUIET)
+    else()
+        find_package(Qt6 COMPONENTS Test QUIET)
+    endif()
+    if(TARGET Qt::Test)
+        add_executable(TestSolverBenchmark ${CMAKE_CURRENT_SOURCE_DIR}/tests/testsolverbenchmark.cpp)
+        target_link_libraries(TestSolverBenchmark PUBLIC StellarSolverTestsLib Qt::Test)
+    else()
+        message(STATUS "Qt::Test not found, skipping TestSolverBenchmark")
+    endif()
+
     file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/demos/pleiades.jpg" DESTINATION "${CMAKE_BINARY_DIR}/")
     file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/demos/randomsky.fits" DESTINATION "${CMAKE_BINARY_DIR}/")
     # Note: These are the index files that solve the above images best.
