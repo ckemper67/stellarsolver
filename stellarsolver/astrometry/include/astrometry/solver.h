@@ -406,4 +406,13 @@ void solver_print_to(const solver_t* sp, FILE* stream);
 
 void solver_log_params(const solver_t* sp);
 
+// Thread-safe accessors for sp->quit_now, which is written by abort() on the
+// calling thread and read/written by the solver on the worker thread.
+static inline anbool sp_quit_now(const solver_t* sp) {
+    return __atomic_load_n(&sp->quit_now, __ATOMIC_ACQUIRE);
+}
+static inline void sp_set_quit_now(solver_t* sp, anbool val) {
+    __atomic_store_n(&sp->quit_now, val, __ATOMIC_RELEASE);
+}
+
 #endif

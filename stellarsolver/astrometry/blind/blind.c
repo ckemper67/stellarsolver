@@ -338,7 +338,7 @@ static void check_time_limits(blind_t* bp) {
         bp->hit_total_cpulimit ||
         bp->hit_timelimit ||
         bp->hit_cpulimit)
-        bp->solver.quit_now = TRUE;
+        sp_set_quit_now(&bp->solver, TRUE);
 }
 
 void blind_run(blind_t* bp) {
@@ -488,7 +488,7 @@ void blind_run(blind_t* bp) {
                 break;
             if (bp->single_field_solved)
                 break;
-            if (bp->cancelled)
+            if (bp_cancelled(bp))
                 break;
 
             // Load the index...
@@ -892,7 +892,7 @@ static time_t timer_callback(void* user_data) {
     blind_t* bp = user_data;
 
     //# Modified by Robert Lancaster for the StellarSolver Internal Library since I got rid of the cancel file and I am just using the boolean
-    if(bp->cancelled)
+    if(bp_cancelled(bp))
         return 0;
     check_time_limits(bp);
 
@@ -1032,7 +1032,7 @@ static void solve_fields(blind_t* bp, sip_t* verify_wcs) {
         sp->numscaleok = 0;
         sp->num_cxdx_skipped = 0;
         sp->num_verified = 0;
-        sp->quit_now = FALSE;
+        sp_set_quit_now(sp, FALSE);
         sp->mo_template = &template ;
         sp->record_match_callback = record_match_callback;
         sp->timer_callback = timer_callback;
@@ -1067,7 +1067,7 @@ static void solve_fields(blind_t* bp, sip_t* verify_wcs) {
             if (sp->maxmatches && sp->nummatches >= sp->maxmatches)
                 logmsg("  exceeded the number of quads to match: %i >= %i.\n",
                        sp->nummatches, sp->maxmatches);
-            if (bp->cancelled)
+            if (bp_cancelled(bp))
                 logmsg("  cancelled at user request.\n");
         }
 

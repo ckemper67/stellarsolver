@@ -368,7 +368,7 @@ static void get_field_ll_corner(solver_t* s, double* lx, double* ly) {
 }
 
 void solver_reset_counters(solver_t* s) {
-    s->quit_now = FALSE;
+    sp_set_quit_now(s, FALSE);
     s->have_best_match = FALSE;
     s->best_match_solves = FALSE;
     s->numtries = 0;
@@ -710,7 +710,7 @@ static void add_stars(const pquad* pq, int* field, int fieldoffset,
     for (f[adding]=bottom; f[adding]<fieldtop; f[adding]++) {
         if (!pq->inbox[f[adding]])
             continue;
-        if (unlikely(solver->quit_now))
+        if (unlikely(sp_quit_now(solver)))
             return;
 
         // If we've hit the end of the recursion (we're adding the last star),
@@ -943,12 +943,12 @@ void solver_run(solver_t* solver) {
                     // Now look at all sets of (C, D, ...) stars (subject to field[C] < field[D] < ...)
                     // ("dimquads - 2" because we've set stars A and B at this point)
                     add_stars(pq, field, C, dimquads-2, 0, newpoint, dimquads, solver, tol2);
-                    if (solver->quit_now)
+                    if (sp_quit_now(solver))
                         goto quitnow;
                 }
             }
 
-            if (solver->quit_now)
+            if (sp_quit_now(solver))
                 goto quitnow;
 
             // Now try building quads with the new star not on the diagonal:
@@ -995,7 +995,7 @@ void solver_run(solver_t* solver) {
                         } else {
                             TRY_ALL_CODES(pq, field, dimquads, solver, tol2);
                         }
-                        if (solver->quit_now)
+                        if (sp_quit_now(solver))
                             goto quitnow;
                     }
                 }
@@ -1005,7 +1005,7 @@ void solver_run(solver_t* solver) {
 
             if ((solver->maxquads && (solver->numtries >= solver->maxquads))
                 || (solver->maxmatches && (solver->nummatches >= solver->maxmatches))
-                || solver->quit_now)
+                || sp_quit_now(solver))
                 break;
         }
 
@@ -1098,7 +1098,7 @@ static void try_all_codes_2(const int* fieldstars, int dimquad,
 
     try_permutations(fieldstars, dimquad, code, solver, current_parity,
                      tol2, stars, NULL, 0, placed, &result);
-    if (unlikely(solver->quit_now))
+    if (unlikely(sp_quit_now(solver)))
         goto bailout;
 
     // Flipped:
@@ -1237,7 +1237,7 @@ static void try_permutations(const int* origstars, int dimquad,
                 resolve_matches(*presult, pixvals, stars, dimquad, solver,
                                 current_parity);
             }
-            if (unlikely(solver->quit_now))
+            if (unlikely(sp_quit_now(solver)))
                 return;
         }
     }
@@ -1350,9 +1350,9 @@ static void resolve_matches(kdtree_qres_t* krez, const double *field,
         set_center_and_radius(solver, &mo, &(mo.wcstan), NULL);
 
         if (solver_handle_hit(solver, &mo, NULL, FALSE))
-            solver->quit_now = TRUE;
+            sp_set_quit_now(solver, TRUE);
 
-        if (unlikely(solver->quit_now))
+        if (unlikely(sp_quit_now(solver)))
         {
             #ifdef _MSC_VER //# Modified by Robert Lancaster for the StellarSolver Internal Library
              free(starxyz);

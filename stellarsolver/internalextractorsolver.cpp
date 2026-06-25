@@ -78,8 +78,8 @@ void InternalExtractorSolver::abort()
     waitSEP();
     quit();
 
-    thejob.bp.cancelled = TRUE;
-    thejob.bp.solver.quit_now = TRUE;
+    bp_cancel(&thejob.bp);
+    sp_set_quit_now(&thejob.bp.solver, TRUE);
     if(!isChildSolver)
         emit logOutput("Aborting...");
     m_WasAborted = true;

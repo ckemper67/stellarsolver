@@ -1,0 +1,4 @@
+# TSan suppression file for third-party code that cannot be made atomic-aware.
+
+# cfitsio ffopen uses global state that is not thread-safe.
+race:ffopen

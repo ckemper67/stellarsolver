@@ -168,4 +168,13 @@ void blind_free_matchobj(MatchObj* mo);
 
 //void blind_matchobj_deep_copy(const MatchObj* mo, MatchObj* dest); //# Modified by Robert Lancaster for the StellarSolver Internal Library
 
+// Thread-safe accessors for bp->cancelled, which is written by abort() on the
+// calling thread and read/written by solve_fields() on the worker thread.
+static inline anbool bp_cancelled(const blind_t* bp) {
+    return __atomic_load_n(&bp->cancelled, __ATOMIC_ACQUIRE);
+}
+static inline void bp_cancel(blind_t* bp) {
+    __atomic_store_n(&bp->cancelled, (anbool)TRUE, __ATOMIC_RELEASE);
+}
+
 #endif
